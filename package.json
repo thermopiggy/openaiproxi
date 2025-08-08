@@ -1,7 +1,7 @@
 {
   "name": "openai-proxy",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.cjs",
   "type": "commonjs",
   "scripts": {
     "start": "node index.js"
