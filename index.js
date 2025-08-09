@@ -1,16 +1,17 @@
-// index.js — OpenAI proxy for your website chat
-const express = require("express");
-const cors = require("cors");
+// index.js — OpenAI proxy за твоя уебсайт чат
+import express from "express";
+import cors from "cors";
+import fetch from "node-fetch"; // работи с node-fetch ^3.x и "type": "module"
 
 const app = express();
-app.use(cors({ origin: "*"}));
+app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "1mb" }));
 
-// Health checks
+// Health check
 app.get("/", (_req, res) => res.type("text/plain").send("openai-proxi up"));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// Preflight
+// Preflight за /chat
 app.options("/chat", (_req, res) => {
   res.set({
     "Access-Control-Allow-Origin": "*",
@@ -28,7 +29,6 @@ app.post("/chat", async (req, res) => {
       return res.status(400).json({ error: "messages[] is required" });
     }
 
-    // Use Node 18+ built-in fetch
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -43,7 +43,6 @@ app.post("/chat", async (req, res) => {
     });
 
     const text = await r.text();
-    // Pass through OpenAI response & status (so frontend sees exact error if any)
     res.status(r.status).type("application/json").send(text);
   } catch (e) {
     console.error("proxy_error:", e);
