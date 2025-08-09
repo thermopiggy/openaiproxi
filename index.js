@@ -25,7 +25,7 @@ app.post('/chat', async (req, res) => {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-5", // или "gpt-4o" ако искаш
+        model: "gpt-4о", // или "gpt-4o" ако искаш
         messages
       })
     });
