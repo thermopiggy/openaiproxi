@@ -3,7 +3,7 @@ import cors from 'cors';
 import fetch from 'node-fetch';
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000; 
 
 // Разрешаваме CORS за всички домейни
 app.use(cors());
