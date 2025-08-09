@@ -1,7 +1,7 @@
-// index.js — OpenAI proxy за твоя уебсайт чат
+// index.js — OpenAI proxy с логове
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch"; // работи с node-fetch ^3.x и "type": "module"
+import fetch from "node-fetch"; // node-fetch ^3.3.2
 
 const app = express();
 app.use(cors({ origin: "*" }));
@@ -11,7 +11,7 @@ app.use(express.json({ limit: "1mb" }));
 app.get("/", (_req, res) => res.type("text/plain").send("openai-proxi up"));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// Preflight за /chat
+// Preflight
 app.options("/chat", (_req, res) => {
   res.set({
     "Access-Control-Allow-Origin": "*",
@@ -21,13 +21,15 @@ app.options("/chat", (_req, res) => {
   res.sendStatus(200);
 });
 
-// Chat endpoint
+// Chat endpoint с логове
 app.post("/chat", async (req, res) => {
   try {
     const { messages, model } = req.body || {};
     if (!Array.isArray(messages)) {
       return res.status(400).json({ error: "messages[] is required" });
     }
+
+    console.log("➡️ Incoming request:", JSON.stringify({ messages, model }, null, 2));
 
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -43,6 +45,9 @@ app.post("/chat", async (req, res) => {
     });
 
     const text = await r.text();
+    console.log("⬅️ OpenAI status:", r.status);
+    console.log("⬅️ OpenAI raw response:", text);
+
     res.status(r.status).type("application/json").send(text);
   } catch (e) {
     console.error("proxy_error:", e);
