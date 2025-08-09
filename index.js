@@ -1,59 +1,44 @@
-// index.js — OpenAI proxy с логове
-import express from "express";
-import cors from "cors";
-import fetch from "node-fetch"; // node-fetch ^3.3.2
+import express from 'express';
+import cors from 'cors';
+import fetch from 'node-fetch';
 
 const app = express();
-app.use(cors({ origin: "*" }));
-app.use(express.json({ limit: "1mb" }));
+const PORT = process.env.PORT || 10000;
 
-// Health check
-app.get("/", (_req, res) => res.type("text/plain").send("openai-proxi up"));
-app.get("/health", (_req, res) => res.json({ ok: true }));
+// Разрешаваме CORS за всички домейни
+app.use(cors());
+app.use(express.json());
 
-// Preflight
-app.options("/chat", (_req, res) => {
-  res.set({
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
-  });
-  res.sendStatus(200);
+// Route за тест дали работи
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
-// Chat endpoint с логове
-app.post("/chat", async (req, res) => {
+// Основният чат route
+app.post('/chat', async (req, res) => {
   try {
-    const { messages, model } = req.body || {};
-    if (!Array.isArray(messages)) {
-      return res.status(400).json({ error: "messages[] is required" });
-    }
-
-    console.log("➡️ Incoming request:", JSON.stringify({ messages, model }, null, 2));
-
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+    const messages = req.body.messages || [];
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: model || "gpt-4o-mini",
-        messages,
-        temperature: 0.7
+        model: "gpt-5", // или "gpt-4o" ако искаш
+        messages
       })
     });
 
-    const text = await r.text();
-    console.log("⬅️ OpenAI status:", r.status);
-    console.log("⬅️ OpenAI raw response:", text);
+    const data = await response.json();
+    res.json(data);
 
-    res.status(r.status).type("application/json").send(text);
-  } catch (e) {
-    console.error("proxy_error:", e);
-    res.status(500).json({ error: "proxy_error", detail: String(e) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Proxy listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Proxy listening on port ${PORT}`);
+});
